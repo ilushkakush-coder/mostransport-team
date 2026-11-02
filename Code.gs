@@ -129,7 +129,7 @@ function verifyTelegramInitData_(initData, botToken) {
   const suppliedHash = params.hash;
   if (!suppliedHash) throw new Error('В initData нет подписи Telegram');
 
-  const secretKey = Utilities.computeHmacSha256Signature('WebAppData', botToken);
+  const secretKey = Utilities.computeHmacSha256Signature(botToken, 'WebAppData');
   const entries = Object.keys(params).filter(key => key !== 'hash').sort();
   const fullDataCheck = entries.map(key => `${key}=${params[key]}`).join('\n');
   // Поддерживаем initData как без signature, так и с отдельной подписью для third-party validation.
