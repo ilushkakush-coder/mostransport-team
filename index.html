@@ -135,6 +135,10 @@
     if (telegram) {
       telegram.ready();
       telegram.expand();
+      // Отключаем вертикальный свайп Telegram, который сворачивает Mini App.
+      if (typeof telegram.disableVerticalSwipes === 'function') telegram.disableVerticalSwipes();
+      // Если закрытие всё же инициировано кнопкой или системным жестом, просим подтверждение.
+      if (typeof telegram.enableClosingConfirmation === 'function') telegram.enableClosingConfirmation();
     }
 
     function endpointConfigured() {
