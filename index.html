@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f1f1ee" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>Работа для зумеров — Норм или стрём?</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #242424;
+      --muted: #77776f;
+      --yellow: #ffd52e;
+      --yellow-deep: #efbd00;
+      --gray: #70716d;
+      --surface: #fff;
+      --bg: #f1f1ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px 16px 32px;
+      display: grid; place-items: center; color: var(--ink);
+      font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(ellipse at 50% -20%, #fff4be 0, var(--bg) 56%);
+    }
+    .app { width: min(100%, 420px); }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.035em; }
+    .logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: var(--ink); background: var(--yellow); box-shadow: 0 6px 14px #d0a90035; font-size: 22px; }
+    .counter { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .heading { margin: 0 0 4px; font-size: 29px; letter-spacing: -.05em; }
+    .subheading { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+    .deck { position: relative; height: min(58vh, 490px); min-height: 390px; }
+    .card {
+      position: absolute; inset: 0; padding: 24px; overflow: hidden; border: 1px solid #e9e8e2; border-radius: 28px;
+      background: var(--surface); box-shadow: 0 18px 55px #39382c1a;
+      touch-action: pan-y; user-select: none; cursor: grab;
+      transition: transform .28s ease, opacity .28s ease;
+    }
+    .card.dragging { transition: none; cursor: grabbing; }
+    .card.under { transform: scale(.96) translateY(12px); opacity: .68; }
+    .card.gone-right { transform: translate(125%, -6%) rotate(18deg); opacity: 0; }
+    .card.gone-left { transform: translate(-125%, -6%) rotate(-18deg); opacity: 0; }
+    .swipe-label { position: absolute; z-index: 2; top: 24px; padding: 7px 11px; border: 3px solid; border-radius: 10px; font-size: 14px; font-weight: 900; letter-spacing: .06em; opacity: 0; background: #ffffffd9; }
+    .label-yes { right: 18px; color: #333; border-color: var(--yellow-deep); transform: rotate(9deg); }
+    .label-no { left: 18px; color: #555650; border-color: #777872; transform: rotate(-9deg); }
+    .card-content { height: 100%; display: flex; flex-direction: column; }
+    .card-index { align-self: flex-start; margin: 1px 0 26px; padding: 6px 10px; border-radius: 999px; color: #55554d; background: #f2f1e9; font-size: 12px; font-weight: 700; }
+    .question { margin: auto 0; font-size: clamp(28px, 8vw, 36px); line-height: 1.13; letter-spacing: -.05em; font-weight: 820; }
+    .question.compact { font-size: clamp(25px, 7vw, 32px); }
+    .card-photo { display: block; width: 100%; height: 188px; margin: 18px 0 0; border-radius: 17px; object-fit: cover; background: #f3f2ec; }
+    .photo-caption { margin: 7px 2px 0; color: var(--muted); font-size: 12px; }
+    .swipe-hint { margin-top: auto; padding-top: 24px; color: #77776f; font-size: 13px; }
+    .actions { display: flex; justify-content: center; align-items: center; gap: 14px; margin: 19px 0 13px; }
+    .action { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 142px; height: 58px; padding: 0 18px; border: 0; border-radius: 999px; box-shadow: 0 8px 22px #38372b1a; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; font: inherit; font-weight: 800; }
+    .action:hover { transform: translateY(-2px); box-shadow: 0 11px 28px #38372b27; }
+    .action:active { transform: scale(.97); }
+    .action.no { color: #fff; background: var(--gray); }
+    .action.yes { color: var(--ink); background: var(--yellow); }
+    .action svg { width: 21px; height: 21px; flex: 0 0 auto; }
+    .hint { text-align: center; color: #8b8b82; font-size: 12px; }
+    .empty { display: grid; place-content: center; height: 100%; text-align: center; }
+    .empty .emoji { font-size: 48px; }
+    .empty h2 { margin: 12px 0 5px; }
+    .empty p { margin: 0; color: var(--muted); }
+    .toast { position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translate(-50%, 14px); opacity: 0; padding: 12px 18px; border-radius: 999px; color: var(--ink); background: var(--yellow); box-shadow: 0 8px 24px #19192b30; font-size: 14px; font-weight: 700; pointer-events: none; transition: .22s; white-space: nowrap; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    @media (max-height: 760px) { body { padding-top: 14px; } .heading { font-size: 26px; } .deck { height: 54vh; min-height: 340px; } .card { padding: 20px; } .card-index { margin-bottom: 18px; } .card-photo { height: 155px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand"><span class="logo" aria-hidden="true">↔</span><span>Работа для зумеров</span></div>
+      <span class="counter" id="counter"></span>
+    </header>
+    <h1 class="heading">Норм или стрём?</h1>
+    <p class="subheading">Свайп вправо — норм, влево — стрём</p>
+    <section class="deck" id="deck" aria-label="Карточки с вопросами"></section>
+    <div class="actions" id="actions">
+      <button class="action no" id="skip" aria-label="Стрём — пропустить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m7 7 10 10M17 7 7 17"/></svg>
+        Стрём
+      </button>
+      <button class="action yes" id="like" aria-label="Норм — выбрать">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
+        Норм
+      </button>
+    </div>
+    <div class="hint" id="hint">Можно также использовать кнопки или стрелки клавиатуры</div>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    // Вставьте URL развёрнутого Apps Script Web App в кавычки ниже.
+    const APPS_SCRIPT_URL = 'PASTE_DEPLOYED_WEB_APP_URL_HERE';
+    const questions = [
+      { text: 'Остаться в офисе после рабочего дня?' },
+      { text: 'Работать рядом с домом?' },
+      { text: 'Начинать смену в семь утра?' },
+      { text: 'Получать зарплату два раза в месяц?' },
+      { text: 'Выйти на смену в субботу?' },
+      { text: 'Пройти собеседование по видеосвязи?' },
+      { text: 'Носить форму на работе?' },
+      { text: 'Учиться новому прямо на работе?' },
+      { text: 'Общаться с людьми весь день?' },
+      { text: 'Выбрать гибкий график?' },
+      { text: 'Работать в команде друзей?' },
+      { text: 'Получить первую работу без опыта?' },
+      { text: 'Отвечать в рабочих чатах вечером?' },
+      { text: 'Поработать на городском событии?' },
+      { text: 'Работать на свежем воздухе?' },
+      { text: 'Совмещать учёбу и работу?' },
+      { text: 'Снимать короткие видео для бренда?' },
+      { text: 'Пройти оплачиваемую стажировку?' },
+      { text: 'Попробовать себя в профессии водителя?' },
+      {
+        text: 'Это новая реклама профессий Московского транспорта?',
+        photo: 'transport-banner.svg',
+        photoAlt: 'Макет рекламного баннера о работе в Московском транспорте',
+        caption: 'Пример рекламного баннера'
+      }
+    ];
+    const deck = document.querySelector('#deck');
+    const counter = document.querySelector('#counter');
+    const toast = document.querySelector('#toast');
+    const telegram = window.Telegram && window.Telegram.WebApp;
+    const initData = telegram ? telegram.initData : '';
+    const sessionId = (window.crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    let current = 0;
+    let toastTimer;
+
+    if (telegram) {
+      telegram.ready();
+      telegram.expand();
+    }
+
+    function endpointConfigured() {
+      return APPS_SCRIPT_URL.startsWith('https://script.google.com/macros/s/') &&
+        !APPS_SCRIPT_URL.includes('PASTE_DEPLOYED');
+    }
+
+    async function sendEvent(payload) {
+      if (!endpointConfigured() || !initData) return false;
+      try {
+        // text/plain — простой CORS-запрос без preflight; Apps Script проверит подпись initData.
+        // no-cors скрывает ответ endpoint от браузера, поэтому подтверждение доставки не гарантируется.
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify({ ...payload, initData, sessionId })
+        });
+        return true;
+      } catch (error) {
+        console.error('Не удалось отправить событие в Apps Script', error);
+        return false;
+      }
+    }
+
+    if (endpointConfigured() && initData) {
+      sendEvent({ event: 'open' });
+    }
+
+    function render() {
+      counter.textContent = current < questions.length ? `${current + 1} из ${questions.length}` : '';
+      if (current >= questions.length) {
+        deck.innerHTML = '<div class="empty"><div class="emoji">✨</div><h2>Карточки закончились</h2><p>Спасибо, что поделился мнением!</p></div>';
+        document.querySelector('#actions').hidden = true;
+        document.querySelector('#hint').hidden = true;
+        return;
+      }
+      document.querySelector('#actions').hidden = false;
+      document.querySelector('#hint').hidden = false;
+      deck.innerHTML = '';
+      if (current + 1 < questions.length) {
+        const back = document.createElement('article');
+        back.className = 'card under';
+        back.setAttribute('aria-hidden', 'true');
+        deck.append(back);
+      }
+      const item = questions[current];
+      const card = document.createElement('article');
+      card.className = 'card';
+      const photoMarkup = item.photo
+        ? `<img class="card-photo" src="${item.photo}" alt="${item.photoAlt || ''}"><div class="photo-caption">${item.caption || ''}</div>`
+        : '';
+      const compact = item.photo ? ' compact' : '';
+      card.innerHTML = `<span class="swipe-label label-yes">НОРМ</span><span class="swipe-label label-no">СТРЁМ</span>
+        <div class="card-content"><div class="card-index">ВОПРОС ${current + 1}</div>
+          <h2 class="question${compact}">${item.text}</h2>${photoMarkup}
+          <div class="swipe-hint">Как тебе такой вариант?</div></div>`;
+      deck.append(card);
+      enableSwipe(card);
+    }
+
+    function decide(normal) {
+      if (current >= questions.length) return;
+      const questionIndex = current;
+      const item = questions[questionIndex];
+      const card = deck.querySelector('.card:not(.under)');
+      if (!card) return;
+      card.classList.add(normal ? 'gone-right' : 'gone-left');
+      const payload = {
+        event: 'swipe',
+        questionId: `Q${String(questionIndex + 1).padStart(2, '0')}`,
+        answer: normal ? 'норм' : 'стрём'
+      };
+      if (!endpointConfigured()) {
+        showToast(normal ? 'Норм 👍 · Apps Script ещё не подключён' : 'Стрём 👎 · Apps Script ещё не подключён');
+      } else if (!initData) {
+        showToast('Открой мини-приложение через Telegram');
+      } else {
+        showToast(normal ? 'Норм 👍 · отправляю ответ' : 'Стрём 👎 · отправляю ответ');
+        sendEvent(payload).then(sent => {
+          if (!sent) showToast('Не удалось отправить ответ · проверь подключение');
+        });
+      }
+      current++;
+      window.setTimeout(render, 180);
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function enableSwipe(card) {
+      let startX = 0, startY = 0, dx = 0, active = false;
+      const yes = card.querySelector('.label-yes');
+      const no = card.querySelector('.label-no');
+      card.addEventListener('pointerdown', event => {
+        active = true; startX = event.clientX; startY = event.clientY; dx = 0;
+        card.classList.add('dragging'); card.setPointerCapture(event.pointerId);
+      });
+      card.addEventListener('pointermove', event => {
+        if (!active) return;
+        dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        card.style.transform = `translate(${dx}px, ${dy * .18}px) rotate(${dx * .055}deg)`;
+        const strength = Math.min(Math.abs(dx) / 90, 1);
+        (dx >= 0 ? yes : no).style.opacity = strength;
+        (dx >= 0 ? no : yes).style.opacity = 0;
+      });
+      const finish = () => {
+        if (!active) return;
+        active = false; card.classList.remove('dragging');
+        if (Math.abs(dx) > 90) decide(dx > 0);
+        else { card.style.transform = ''; yes.style.opacity = 0; no.style.opacity = 0; }
+      };
+      card.addEventListener('pointerup', finish);
+      card.addEventListener('pointercancel', finish);
+    }
+
+    document.querySelector('#skip').addEventListener('click', () => decide(false));
+    document.querySelector('#like').addEventListener('click', () => decide(true));
+    window.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') decide(false);
+      if (event.key === 'ArrowRight') decide(true);
+    });
+    render();
+  </script>
+</body>
+</html>
