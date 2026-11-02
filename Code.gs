@@ -138,7 +138,8 @@ function verifyTelegramInitData_(initData, botToken) {
     candidates.push(entries.filter(key => key !== 'signature').map(key => `${key}=${params[key]}`).join('\n'));
   }
   const valid = candidates.some(dataCheck => {
-    const calculatedHash = toHex_(Utilities.computeHmacSha256Signature(dataCheck, secretKey));
+    const dataBytes = Utilities.newBlob(dataCheck, 'text/plain').getBytes();
+    const calculatedHash = toHex_(Utilities.computeHmacSha256Signature(dataBytes, secretKey));
     return constantTimeEquals_(calculatedHash, suppliedHash.toLowerCase());
   });
   if (!valid) throw new Error('Подпись Telegram не прошла проверку');
