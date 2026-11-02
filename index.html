@@ -19,7 +19,8 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0; min-height: 100vh; padding: 24px 16px 32px;
+      margin: 0; min-height: 100vh;
+      padding: calc(16px + max(36px, var(--tg-content-safe-area-inset-top, 0px))) 16px 32px;
       display: grid; place-items: center; color: var(--ink);
       font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: radial-gradient(ellipse at 50% -20%, #fff4be 0, var(--bg) 56%);
@@ -64,9 +65,10 @@
     .empty .emoji { font-size: 48px; }
     .empty h2 { margin: 12px 0 5px; }
     .empty p { margin: 0; color: var(--muted); }
-    .toast { position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translate(-50%, 14px); opacity: 0; padding: 12px 18px; border-radius: 999px; color: var(--ink); background: var(--yellow); box-shadow: 0 8px 24px #19192b30; font-size: 14px; font-weight: 700; pointer-events: none; transition: .22s; white-space: nowrap; }
+    .toast { position: fixed; z-index: 5; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translate(-50%, 14px); opacity: 0; width: min(92vw, 480px); padding: 12px 18px; border-radius: 16px; color: var(--ink); background: var(--yellow); box-shadow: 0 8px 24px #19192b30; font-size: 14px; font-weight: 700; pointer-events: none; transition: .22s; text-align: center; }
     .toast.show { transform: translate(-50%, 0); opacity: 1; }
-    @media (max-height: 760px) { body { padding-top: 14px; } .heading { font-size: 26px; } .deck { height: 54vh; min-height: 340px; } .card { padding: 20px; } .card-index { margin-bottom: 18px; } .card-photo { height: 155px; } }
+     .action:disabled { opacity: .7; cursor: wait; }
+    @media (max-height: 760px) { body { padding-top: calc(12px + max(28px, var(--tg-content-safe-area-inset-top, 0px))); } .heading { font-size: 26px; } .deck { height: 54vh; min-height: 340px; } .card { padding: 20px; } .card-index { margin-bottom: 18px; } .card-photo { height: 155px; } }
   </style>
 </head>
 <body>
@@ -92,7 +94,7 @@
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
-    // Вставьте URL развёрнутого Apps Script Web App в кавычки ниже.
+    // Apps Script URL используется Vercel API proxy, чтобы получать реальный ответ о записи.
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRe5CmVRT-AsHEB-d2IFlAOz8arWwBxQCrg8JQGlE79Af0_81D8OdqdAXYTSXX6tOD/exec';
     const questions = [
       { text: 'Остаться в офисе после рабочего дня?' },
@@ -131,6 +133,7 @@
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let current = 0;
     let toastTimer;
+    let isSaving = false;
 
     if (telegram) {
       telegram.ready();
@@ -147,20 +150,22 @@
     }
 
     async function sendEvent(payload) {
-      if (!endpointConfigured() || !initData) return false;
+      if (!endpointConfigured()) return { ok: false, error: 'Apps Script не подключён' };
+      if (!initData) return { ok: false, error: 'Открой мини-приложение через Telegram' };
       try {
-        // text/plain — простой CORS-запрос без preflight; Apps Script проверит подпись initData.
-        // no-cors скрывает ответ endpoint от браузера, поэтому подтверждение доставки не гарантируется.
-        await fetch(APPS_SCRIPT_URL, {
+        const response = await fetch('/api/swipe', {
           method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, initData, sessionId })
         });
-        return true;
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) {
+          return { ok: false, error: result.error || `Ошибка сервера (${response.status})` };
+        }
+        return { ok: true };
       } catch (error) {
         console.error('Не удалось отправить событие в Apps Script', error);
-        return false;
+        return { ok: false, error: 'Нет связи с сервером. Попробуй ещё раз.' };
       }
     }
 
@@ -200,13 +205,11 @@
       enableSwipe(card);
     }
 
-    function decide(normal) {
-      if (current >= questions.length) return;
+    async function decide(normal) {
+      if (current >= questions.length || isSaving) return;
       const questionIndex = current;
-      const item = questions[questionIndex];
       const card = deck.querySelector('.card:not(.under)');
       if (!card) return;
-      card.classList.add(normal ? 'gone-right' : 'gone-left');
       const payload = {
         event: 'swipe',
         questionId: `Q${String(questionIndex + 1).padStart(2, '0')}`,
@@ -214,14 +217,27 @@
       };
       if (!endpointConfigured()) {
         showToast(normal ? 'Норм 👍 · Apps Script ещё не подключён' : 'Стрём 👎 · Apps Script ещё не подключён');
+        return;
       } else if (!initData) {
         showToast('Открой мини-приложение через Telegram');
-      } else {
-        showToast(normal ? 'Норм 👍 · отправляю ответ' : 'Стрём 👎 · отправляю ответ');
-        sendEvent(payload).then(sent => {
-          if (!sent) showToast('Не удалось отправить ответ · проверь подключение');
-        });
+        return;
       }
+      isSaving = true;
+      document.querySelectorAll('.action').forEach(button => { button.disabled = true; });
+      showToast('Сохраняю ответ…');
+      const result = await sendEvent(payload);
+      isSaving = false;
+      document.querySelectorAll('.action').forEach(button => { button.disabled = false; });
+      if (!result.ok) {
+        card.style.transform = '';
+        card.classList.remove('gone-right', 'gone-left');
+        card.querySelectorAll('.swipe-label').forEach(label => { label.style.opacity = 0; });
+        showToast(`Не сохранилось: ${result.error}`);
+        return;
+      }
+      card.style.transform = '';
+      card.classList.add(normal ? 'gone-right' : 'gone-left');
+      showToast(normal ? 'Норм 👍 · ответ сохранён' : 'Стрём 👎 · ответ сохранён');
       current++;
       window.setTimeout(render, 180);
     }
