@@ -50,5 +50,5 @@ URL публичного endpoint уже указан в `index.html`. Сам а
 ## Текущие незавершённые шаги
 
 - Vercel-проект и адрес сайта ещё не созданы. После подключения репозитория к Vercel нужно опубликовать статический сайт из корня репозитория и включить автоматические production-деплои для `main`.
-- Проект Vercel импортирует репозиторий `main`; первый deployment ожидает завершения повторной авторизации Vercel в браузере. После Ready проверьте production URL и внесите его в настройки Telegram-бота.
-- После ввода одноразового кода Vercel проверьте в браузере открытие Mini App, запись Telegram ID/сессии, ответы и сводные формулы. Google Apps Script `/exec` уже подключён к интерфейсу.
+- Production-сайт опубликован: [https://mostransport-team.vercel.app](https://mostransport-team.vercel.app). Vercel подключён к GitHub-репозиторию `ilushkakush-coder/mostransport-team`, ветка `main`; новые изменения в `main` запускают автоматическую production-сборку.
+- Вставьте `https://mostransport-team.vercel.app` в настройки Telegram-бота как URL Mini App. Затем откройте Mini App из Telegram и проверьте запись открытия, Telegram ID, свайпов и сводных формул в Google Таблице. Публичный Apps Script `/exec` уже подключён к интерфейсу.
