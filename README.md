@@ -25,4 +25,4 @@ Apps Script развернут в двух режимах: приватный en
 
 GitHub-репозиторий проекта: [mostransport-team](https://github.com/ilushkakush-coder/mostransport-team). После загрузки исходников сюда он станет источником версий кода и документации. Когда репозиторий будет связан с Vercel, каждый push в основную ветку будет автоматически обновлять сайт.
 
-Проект Vercel импортирует этот репозиторий из `main`; завершение первого deployment ожидает повторную авторизацию аккаунта в браузере. После статуса Ready адрес сайта появится в проекте Vercel. Инструкции и дальнейшие шаги находятся в `PROJECT_GUIDE.md`.
+Production-сайт: [https://mostransport-team.vercel.app](https://mostransport-team.vercel.app). Vercel подключён к этому репозиторию и автоматически обновит сайт после push в `main`. Укажите эту ссылку как URL Telegram Mini App, затем протестируйте открытие и сохранение свайпов. Инструкции находятся в `PROJECT_GUIDE.md`.
