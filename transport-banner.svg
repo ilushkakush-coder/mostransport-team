@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" role="img" aria-labelledby="title desc">
+  <title id="title">Работа в Московском транспорте</title>
+  <desc id="desc">Макет яркого рекламного баннера с городским автобусом</desc>
+  <defs>
+    <linearGradient id="sky" x2="1" y2="1"><stop stop-color="#ffe85a"/><stop offset="1" stop-color="#ffcf23"/></linearGradient>
+  </defs>
+  <rect width="900" height="430" rx="34" fill="url(#sky)"/>
+  <circle cx="752" cy="81" r="48" fill="#fff8d2" opacity=".75"/>
+  <path d="M0 324 144 257l87 43 110-105 105 93 113-68 122 82 97-44 122 44v128H0Z" fill="#252a2a" opacity=".1"/>
+  <text x="48" y="73" fill="#262725" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="2">РАБОТА ДЛЯ ТЕХ, КТО ДВИЖЕТ ГОРОД</text>
+  <text x="48" y="138" fill="#262725" font-family="Arial,sans-serif" font-size="49" font-weight="900">ТВОЯ СМЕНА</text>
+  <text x="48" y="193" fill="#262725" font-family="Arial,sans-serif" font-size="49" font-weight="900">МЕНЯЕТ МОСКВУ</text>
+  <text x="50" y="233" fill="#34352e" font-family="Arial,sans-serif" font-size="21">Профессии Московского транспорта</text>
+  <rect x="50" y="260" width="235" height="48" rx="24" fill="#292b2a"/>
+  <text x="77" y="291" fill="#fff" font-family="Arial,sans-serif" font-size="17" font-weight="700">УЗНАТЬ О ВАКАНСИЯХ →</text>
+  <g transform="translate(445 196)">
+    <rect x="0" y="0" width="390" height="139" rx="24" fill="#fff"/>
+    <path d="M36 0h314a40 40 0 0 1 40 40v52H0V36A36 36 0 0 1 36 0Z" fill="#e84c43"/>
+    <rect x="24" y="24" width="105" height="48" rx="9" fill="#bce9ed"/>
+    <rect x="143" y="24" width="105" height="48" rx="9" fill="#bce9ed"/>
+    <rect x="262" y="24" width="103" height="48" rx="9" fill="#bce9ed"/>
+    <rect x="0" y="89" width="390" height="19" fill="#373a38"/>
+    <circle cx="76" cy="128" r="22" fill="#242625"/><circle cx="76" cy="128" r="10" fill="#d8d8d2"/>
+    <circle cx="316" cy="128" r="22" fill="#242625"/><circle cx="316" cy="128" r="10" fill="#d8d8d2"/>
+    <text x="24" y="86" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="700">МОСКОВСКИЙ ТРАНСПОРТ</text>
+  </g>
+  <text x="52" y="378" fill="#35362f" font-family="Arial,sans-serif" font-size="14" opacity=".72">Концепт рекламного баннера для карточки вакансий</text>
+</svg>
