@@ -57,6 +57,6 @@ URL публичного endpoint уже указан в `index.html`. Сам а
 
 ## Текущие незавершённые шаги
 
-- Vercel-проект и адрес сайта ещё не созданы. После подключения репозитория к Vercel нужно опубликовать статический сайт из корня репозитория и включить автоматические production-деплои для `main`.
-- Production-сайт опубликован: [https://mostransport-team.vercel.app](https://mostransport-team.vercel.app). Vercel подключён к GitHub-репозиторию `ilushkakush-coder/mostransport-team`, ветка `main`; новые изменения в `main` запускают автоматическую production-сборку.
+- Production-сайт опубликован: [https://mostransport-team.vercel.app](https://mostransport-team.vercel.app). Vercel подключён к GitHub-репозиторию `ilushkakush-coder/mostransport-team`, ветка `main`; новые изменения в `main` запускают автоматический production-деплой.
+- Telegram `/start` работает через Vercel relay, который передаёт обновление в Apps Script и возвращает Telegram прямой ответ. После изменений Apps Script заново публикуйте версию; если меняется URL или секрет webhook, запускайте `setupTelegramWebhook`.
 - Вставьте `https://mostransport-team.vercel.app` в настройки Telegram-бота как URL Mini App. Затем откройте Mini App из Telegram и проверьте запись открытия, Telegram ID, свайпов и сводных формул в Google Таблице. Публичный Apps Script `/exec` используется Mini App для сохранения результатов; входящие команды бота проходят через Vercel relay, чтобы Telegram получал ответ без перенаправления Google.
