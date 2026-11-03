@@ -8,6 +8,8 @@
 - `Code.gs` — Apps Script: создаёт таблицу, принимает события и проверяет подпись Telegram `initData`.
 - `PROJECT_GUIDE.md` — подробные шаги настройки, публикации и дальнейших обновлений.
 
+Telegram-бот отвечает на `/start` приветствием и inline-кнопкой `Открыть приложение`. Обработчик и регистрация webhook находятся в `Code.gs`; токен бота и секрет webhook хранятся в свойствах Apps Script.
+
 ## Google Таблица и Apps Script
 
 Проект Apps Script **«команда транспорта»** принимает валидированные события Telegram Mini App. Таблица результатов хранится на Google Drive владельца и содержит вкладки `Sessions`, `Responses` и `Summary`:
