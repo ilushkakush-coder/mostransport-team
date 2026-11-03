@@ -135,12 +135,11 @@ function setupTelegramWebhook() {
     props.setProperty(PROP_BOT_WEBHOOK_SECRET, secret);
   }
 
-  const webAppUrl = ScriptApp.getService().getUrl();
-  if (!webAppUrl) throw new Error('Сначала разверните Apps Script как веб-приложение');
+  const webAppUrl = 'https://mostransport-team.vercel.app/api/telegram?hook=' + encodeURIComponent(secret);
   const response = UrlFetchApp.fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
     method: 'post',
     contentType: 'application/json',
-    payload: JSON.stringify({ url: `${webAppUrl}?hook=${secret}`, allowed_updates: ['message'] }),
+    payload: JSON.stringify({ url: webAppUrl, allowed_updates: ['message'] }),
     muteHttpExceptions: true
   });
   const result = JSON.parse(response.getContentText());
@@ -275,6 +274,25 @@ function constantTimeEquals_(left, right) {
   let mismatch = 0;
   for (let i = 0; i < left.length; i++) mismatch |= left.charCodeAt(i) ^ right.charCodeAt(i);
   return mismatch === 0;
+}
+
+function diagnoseTelegramWebhook() {
+  const props = PropertiesService.getScriptProperties();
+  const botToken = props.getProperty(PROP_BOT_TOKEN) || props.getProperty('`TELEGRAM_BOT_TOKEN`');
+  if (!botToken) throw new Error('Не задан Script Property TELEGRAM_BOT_TOKEN');
+  const response = UrlFetchApp.fetch('https://api.telegram.org/bot' + botToken + '/getWebhookInfo', { muteHttpExceptions: true });
+  const data = JSON.parse(response.getContentText());
+  const info = data.result || {};
+  const result = {
+    telegramApiOk: Boolean(data.ok),
+    webhookConfigured: Boolean(info.url),
+    webhookMatchesThisScript: String(info.url || '').split('?')[0] === ScriptApp.getService().getUrl(),
+    pendingUpdates: Number(info.pending_update_count || 0),
+    lastErrorDate: info.last_error_date || null,
+    lastErrorMessage: info.last_error_message || null
+  };
+  Logger.log(JSON.stringify(result));
+  return result;
 }
 
 function json_(value) {
