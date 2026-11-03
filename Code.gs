@@ -49,12 +49,13 @@ function setup() {
 
   const sessions = getOrCreateSheet_(spreadsheet, 'Sessions', ['Открыто', 'Telegram ID', 'ID сессии']);
   const responses = getOrCreateSheet_(spreadsheet, 'Responses', ['Время ответа', 'Telegram ID', 'ID сессии', 'ID вопроса', 'Вопрос', 'Ответ']);
-  const summary = getOrCreateSheet_(spreadsheet, 'Summary', ['ID вопроса', 'Вопрос', 'Норм', 'Стрём']);
+  const summary = getOrCreateSheet_(spreadsheet, 'Summary', ['ID вопроса', 'Вопрос', 'Нрав', 'Не нрав']);
 
   sessions.setFrozenRows(1);
   sessions.getRange('B:B').setNumberFormat('@');
   responses.setFrozenRows(1);
   responses.getRange('B:B').setNumberFormat('@');
+  summary.getRange(1, 1, 1, 4).setValues([['ID вопроса', 'Вопрос', 'Нрав', 'Не нрав']]);
 
   const oldSummaryRows = Math.max(summary.getLastRow() - 1, QUESTION_ROWS.length);
   if (oldSummaryRows > 0) summary.getRange(2, 1, oldSummaryRows, 4).clearContent();
@@ -62,8 +63,8 @@ function setup() {
   const countFormulas = QUESTION_ROWS.map((_, index) => {
     const row = index + 2;
     return [
-      `=COUNTIFS(Responses!D:D;A${row};Responses!F:F;"норм")`,
-      `=COUNTIFS(Responses!D:D;A${row};Responses!F:F;"стрём")`
+      `=COUNTIFS(Responses!D:D;A${row};Responses!F:F;"нрав")+COUNTIFS(Responses!D:D;A${row};Responses!F:F;"норм")`,
+      `=COUNTIFS(Responses!D:D;A${row};Responses!F:F;"не нрав")+COUNTIFS(Responses!D:D;A${row};Responses!F:F;"стрём")`
     ];
   });
   summary.getRange(2, 3, countFormulas.length, 2).setFormulas(countFormulas);
@@ -100,7 +101,7 @@ function doPost(e) {
       const question = QUESTION_ROWS.find(row => row[0] === body.questionId);
       const answer = String(body.answer || '').toLowerCase();
       if (!question) throw new Error('Неизвестный вопрос');
-      if (answer !== 'норм' && answer !== 'стрём') throw new Error('Ответ должен быть «норм» или «стрём»');
+      if (answer !== 'нрав' && answer !== 'не нрав') throw new Error('Ответ должен быть «нрав» или «не нрав»');
       appendLocked_(spreadsheet.getSheetByName('Responses'), [new Date(), telegramId, sessionId, question[0], question[1], answer]);
       return json_({ ok: true });
     }

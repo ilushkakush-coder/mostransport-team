@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f2f2f2" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <title>Работа для зумеров — Норм или стрём?</title>
+    <title>Вакансия мечты — Нрав или не нрав?</title>
   <style>
     :root {
       color-scheme: light;
@@ -27,7 +27,7 @@
     .app { width: min(100%, 420px); }
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.035em; }
-    .logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: #fff; background: var(--ink); font-size: 22px; }
+    .logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: #f04452; background: #111; font-size: 22px; line-height: 1; }
     .counter { color: var(--muted); font-size: 13px; font-weight: 700; }
     .heading { margin: 0 0 4px; font-size: 29px; letter-spacing: -.05em; }
     .subheading { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
@@ -42,7 +42,6 @@
     .card.under { transform: scale(.96) translateY(12px); opacity: .68; }
     .card.gone-right { transform: translate(125%, -6%) rotate(18deg); opacity: 0; }
     .card.gone-left { transform: translate(-125%, -6%) rotate(-18deg); opacity: 0; }
-    .deck.saving .card { pointer-events: none; }
     .swipe-label { position: absolute; z-index: 2; top: 24px; padding: 7px 11px; border: 3px solid; border-radius: 10px; font-size: 14px; font-weight: 900; letter-spacing: .06em; opacity: 0; background: #ffffffd9; }
     .label-yes { right: 18px; color: #222; border-color: #222; transform: rotate(9deg); }
     .label-no { left: 18px; color: #555; border-color: #777; transform: rotate(-9deg); }
@@ -50,7 +49,6 @@
     .card-index { align-self: flex-start; margin: 1px 0 26px; padding: 6px 10px; border-radius: 999px; color: #555; background: #f0f0f0; font-size: 12px; font-weight: 700; }
     .question { margin: auto 0; font-size: clamp(28px, 8vw, 36px); line-height: 1.13; letter-spacing: -.05em; font-weight: 820; }
     .question.compact { font-size: clamp(25px, 7vw, 32px); }
-    .swipe-hint { margin-top: auto; padding-top: 24px; color: var(--muted); font-size: 13px; }
     .actions { display: flex; justify-content: center; align-items: center; gap: 14px; margin: 19px 0 13px; }
     .action { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 142px; height: 58px; padding: 0 18px; border: 0; border-radius: 999px; box-shadow: 0 8px 22px #0000001a; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; font: inherit; font-weight: 800; }
     .action:hover { transform: translateY(-2px); box-shadow: 0 11px 28px #00000027; }
@@ -74,20 +72,20 @@
 <body>
   <main class="app">
     <header>
-      <div class="brand"><span class="logo" aria-hidden="true">↔</span><span>Работа для зумеров</span></div>
+      <div class="brand"><span class="logo" aria-hidden="true">♥</span><span>Вакансия мечты</span></div>
       <span class="counter" id="counter"></span>
     </header>
-    <h1 class="heading">Норм или стрём?</h1>
-    <p class="subheading">Свайп вправо — норм, влево — стрём</p>
+    <h1 class="heading">Нрав или не нрав?</h1>
+    <p class="subheading">Свайп вправо — нрав, влево — не нрав</p>
     <section class="deck" id="deck" aria-label="Карточки с вопросами"></section>
     <div class="actions" id="actions">
-      <button class="action no" id="skip" aria-label="Стрём — пропустить">
+      <button class="action no" id="skip" aria-label="Не нрав — пропустить">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m7 7 10 10M17 7 7 17"/></svg>
-        Стрём
+        Не нрав
       </button>
-      <button class="action yes" id="like" aria-label="Норм — выбрать">
+      <button class="action yes" id="like" aria-label="Нрав — выбрать">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
-        Норм
+        Нрав
       </button>
     </div>
     <div class="hint" id="hint">Можно также использовать кнопки или стрелки клавиатуры</div>
@@ -139,6 +137,8 @@
     let current = 0;
     let toastTimer;
     let isSaving = false;
+    const saveQueue = [];
+    let saveQueueRunning = false;
 
     if (telegram) {
       telegram.ready();
@@ -174,9 +174,7 @@
       }
     }
 
-    if (endpointConfigured() && initData) {
-      sendEvent({ event: 'open' });
-    }
+    if (endpointConfigured() && initData) enqueueSave({ event: 'open' });
 
     function render() {
       counter.textContent = current < questions.length ? `${current + 1} из ${questions.length}` : '';
@@ -198,10 +196,9 @@
       const item = questions[current];
       const card = document.createElement('article');
       card.className = 'card';
-      card.innerHTML = `<span class="swipe-label label-yes">НОРМ</span><span class="swipe-label label-no">СТРЁМ</span>
+      card.innerHTML = `<span class="swipe-label label-yes">НРАВ</span><span class="swipe-label label-no">НЕ НРАВ</span>
         <div class="card-content"><div class="card-index">ВОПРОС ${current + 1}</div>
-          <h2 class="question">${item.text}</h2>
-          <div class="swipe-hint">Как тебе такой вариант?</div></div>`;
+          <h2 class="question">${item.text}</h2></div>`;
       deck.append(card);
       enableSwipe(card);
     }
@@ -214,10 +211,10 @@
       const payload = {
         event: 'swipe',
         questionId: questions[questionIndex].id,
-        answer: normal ? 'норм' : 'стрём'
+        answer: normal ? 'нрав' : 'не нрав'
       };
       if (!endpointConfigured()) {
-        showToast(normal ? 'Норм 👍 · Apps Script ещё не подключён' : 'Стрём 👎 · Apps Script ещё не подключён');
+        showToast(normal ? 'Нрав ❤️ · Apps Script ещё не подключён' : 'Не нрав 👎 · Apps Script ещё не подключён');
         return;
       } else if (!initData) {
         showToast('Открой мини-приложение через Telegram');
@@ -226,20 +223,32 @@
       isSaving = true;
       document.querySelectorAll('.action').forEach(button => { button.disabled = true; });
       card.classList.add(normal ? 'gone-right' : 'gone-left');
-      showToast('Сохраняю ответ…');
-      const result = await sendEvent(payload);
-      isSaving = false;
-      document.querySelectorAll('.action').forEach(button => { button.disabled = false; });
-      if (!result.ok) {
-        card.style.transform = '';
-        card.classList.remove('gone-right', 'gone-left');
-        card.querySelectorAll('.swipe-label').forEach(label => { label.style.opacity = 0; });
-        showToast(`Не сохранилось: ${result.error}`);
-        return;
-      }
-      showToast(normal ? 'Норм 👍 · ответ сохранён' : 'Стрём 👎 · ответ сохранён');
+      enqueueSave(payload, normal ? 'Нрав ❤️ · ответ сохранён' : 'Не нрав · ответ сохранён');
+      // Показываем следующую карточку после анимации, не дожидаясь сети или Apps Script.
+      await new Promise(resolve => setTimeout(resolve, 180));
       current++;
       render();
+      isSaving = false;
+      document.querySelectorAll('.action').forEach(button => { button.disabled = false; });
+    }
+
+    function enqueueSave(payload, successMessage = '') {
+      saveQueue.push({ payload, successMessage });
+      processSaveQueue();
+    }
+
+    async function processSaveQueue() {
+      if (saveQueueRunning) return;
+      saveQueueRunning = true;
+      while (saveQueue.length) {
+        const { payload, successMessage } = saveQueue.shift();
+        if (successMessage) showToast('Сохраняю ответ…');
+        const result = await sendEvent(payload);
+        if (successMessage) {
+          showToast(result.ok ? successMessage : `Не сохранилось: ${result.error}`);
+        }
+      }
+      saveQueueRunning = false;
     }
 
     function showToast(message) {
