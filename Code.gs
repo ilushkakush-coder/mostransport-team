@@ -33,6 +33,8 @@ const QUESTION_ROWS = [
 
 const PROP_SHEET_ID = 'RESULTS_SPREADSHEET_ID';
 const PROP_BOT_TOKEN = 'TELEGRAM_BOT_TOKEN';
+const PROP_BOT_WEBHOOK_SECRET = 'TELEGRAM_WEBHOOK_SECRET';
+const MINI_APP_URL = 'https://mostransport-team.vercel.app';
 
 /** Однократно создаёт таблицу: вкладки Sessions, Responses и Summary. */
 function setup() {
@@ -79,6 +81,11 @@ function setup() {
 
 /** Веб-приложение принимает события открытия Mini App и свайпы. */
 function doPost(e) {
+  // Telegram bot updates use a private webhook URL parameter; swipe events use the JSON body.
+  if (e && e.parameter && e.parameter.hook) {
+    return handleTelegramUpdate_(e);
+  }
+
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const scriptProperties = PropertiesService.getScriptProperties();
@@ -107,6 +114,84 @@ function doPost(e) {
     }
 
     throw new Error('Неизвестный тип события');
+  } catch (error) {
+    console.error(error && error.stack ? error.stack : error);
+    return json_({ ok: false, error: String(error.message || error) });
+  }
+}
+
+/**
+ * Run once from the Apps Script editor to register this Apps Script web app as
+ * the Telegram bot webhook. It reuses the token already stored in Script Properties.
+ */
+function setupTelegramWebhook() {
+  const props = PropertiesService.getScriptProperties();
+  const botToken = props.getProperty(PROP_BOT_TOKEN) || props.getProperty('`TELEGRAM_BOT_TOKEN`');
+  if (!botToken) throw new Error('Не задан Script Property TELEGRAM_BOT_TOKEN');
+
+  let secret = props.getProperty(PROP_BOT_WEBHOOK_SECRET);
+  if (!secret) {
+    secret = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+    props.setProperty(PROP_BOT_WEBHOOK_SECRET, secret);
+  }
+
+  const webAppUrl = ScriptApp.getService().getUrl();
+  if (!webAppUrl) throw new Error('Сначала разверните Apps Script как веб-приложение');
+  const response = UrlFetchApp.fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({ url: `${webAppUrl}?hook=${secret}`, allowed_updates: ['message'] }),
+    muteHttpExceptions: true
+  });
+  const result = JSON.parse(response.getContentText());
+  if (!result.ok) throw new Error(`Telegram не принял webhook: ${result.description || response.getResponseCode()}`);
+  Logger.log('Webhook зарегистрирован для бота. URL и секрет не выводятся.');
+  return 'Webhook зарегистрирован';
+}
+
+function handleTelegramUpdate_(e) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const expectedSecret = props.getProperty(PROP_BOT_WEBHOOK_SECRET);
+    if (!expectedSecret || !constantTimeEquals_(String(e.parameter.hook), expectedSecret)) {
+      return json_({ ok: false, error: 'Unauthorized' });
+    }
+
+    const update = JSON.parse((e.postData && e.postData.contents) || '{}');
+    const message = update.message;
+    if (message && message.chat && message.text && /^\/start(?:@\w+)?(?:\s|$)/i.test(message.text)) {
+      const botToken = props.getProperty(PROP_BOT_TOKEN) || props.getProperty('`TELEGRAM_BOT_TOKEN`');
+      if (!botToken) throw new Error('Не задан Script Property TELEGRAM_BOT_TOKEN');
+      const text = [
+        'хай 👋🏻 на связи админ команды транспорта',
+        '',
+        '🙏🏻 помоги написать ✨ <b>вакансию мечты</b> ✨ для зумеров:',
+        'выбери предложения по душе',
+        '',
+        'нрав — свайп вправо ➡',
+        'не нрав — свайп влево ⬅'
+      ].join('\n');
+      const payload = {
+        chat_id: message.chat.id,
+        text,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[{
+            text: 'Открыть приложение',
+            web_app: { url: MINI_APP_URL }
+          }]]
+        }
+      };
+      const response = UrlFetchApp.fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'post',
+        contentType: 'application/json',
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      });
+      const result = JSON.parse(response.getContentText());
+      if (!result.ok) throw new Error(`Telegram sendMessage failed: ${result.description || response.getResponseCode()}`);
+    }
+    return json_({ ok: true });
   } catch (error) {
     console.error(error && error.stack ? error.stack : error);
     return json_({ ok: false, error: String(error.message || error) });
