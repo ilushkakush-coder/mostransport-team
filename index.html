@@ -3,19 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f1f1ee" />
+  <meta name="theme-color" content="#f2f2f2" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <title>Работа для зумеров — Норм или стрём?</title>
   <style>
     :root {
       color-scheme: light;
-      --ink: #242424;
-      --muted: #77776f;
-      --yellow: #ffd52e;
-      --yellow-deep: #efbd00;
-      --gray: #70716d;
+      --ink: #171717;
+      --muted: #707070;
+      --gray: #5d5d5d;
+      --line: #dedede;
       --surface: #fff;
-      --bg: #f1f1ee;
+      --bg: #f2f2f2;
     }
     * { box-sizing: border-box; }
     body {
@@ -23,51 +22,53 @@
       padding: calc(16px + max(78px, var(--tg-content-safe-area-inset-top, 0px))) 16px 32px;
       display: grid; place-items: center; color: var(--ink);
       font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(ellipse at 50% -20%, #fff4be 0, var(--bg) 56%);
+      background: radial-gradient(ellipse at 50% -20%, #fff 0, var(--bg) 68%);
     }
     .app { width: min(100%, 420px); }
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.035em; }
-    .logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: var(--ink); background: var(--yellow); box-shadow: 0 6px 14px #d0a90035; font-size: 22px; }
+    .logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: #fff; background: var(--ink); font-size: 22px; }
     .counter { color: var(--muted); font-size: 13px; font-weight: 700; }
     .heading { margin: 0 0 4px; font-size: 29px; letter-spacing: -.05em; }
     .subheading { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
     .deck { position: relative; height: min(58vh, 490px); min-height: 390px; }
     .card {
-      position: absolute; inset: 0; padding: 24px; overflow: hidden; border: 1px solid #e9e8e2; border-radius: 28px;
-      background: var(--surface); box-shadow: 0 18px 55px #39382c1a;
+      position: absolute; inset: 0; padding: 24px; overflow: hidden; border: 1px solid var(--line); border-radius: 28px;
+      background: var(--surface); box-shadow: 0 18px 55px #00000012;
       touch-action: pan-y; user-select: none; cursor: grab;
-      transition: transform .28s ease, opacity .28s ease;
+      transition: transform .18s cubic-bezier(.2,.75,.25,1), opacity .18s ease-out;
     }
     .card.dragging { transition: none; cursor: grabbing; }
     .card.under { transform: scale(.96) translateY(12px); opacity: .68; }
     .card.gone-right { transform: translate(125%, -6%) rotate(18deg); opacity: 0; }
     .card.gone-left { transform: translate(-125%, -6%) rotate(-18deg); opacity: 0; }
+    .deck.saving .card { pointer-events: none; }
     .swipe-label { position: absolute; z-index: 2; top: 24px; padding: 7px 11px; border: 3px solid; border-radius: 10px; font-size: 14px; font-weight: 900; letter-spacing: .06em; opacity: 0; background: #ffffffd9; }
-    .label-yes { right: 18px; color: #333; border-color: var(--yellow-deep); transform: rotate(9deg); }
-    .label-no { left: 18px; color: #555650; border-color: #777872; transform: rotate(-9deg); }
+    .label-yes { right: 18px; color: #222; border-color: #222; transform: rotate(9deg); }
+    .label-no { left: 18px; color: #555; border-color: #777; transform: rotate(-9deg); }
     .card-content { height: 100%; display: flex; flex-direction: column; }
-    .card-index { align-self: flex-start; margin: 1px 0 26px; padding: 6px 10px; border-radius: 999px; color: #55554d; background: #f2f1e9; font-size: 12px; font-weight: 700; }
+    .card-index { align-self: flex-start; margin: 1px 0 26px; padding: 6px 10px; border-radius: 999px; color: #555; background: #f0f0f0; font-size: 12px; font-weight: 700; }
     .question { margin: auto 0; font-size: clamp(28px, 8vw, 36px); line-height: 1.13; letter-spacing: -.05em; font-weight: 820; }
     .question.compact { font-size: clamp(25px, 7vw, 32px); }
-    .card-photo { display: block; width: 100%; height: 188px; margin: 18px 0 0; border-radius: 17px; object-fit: cover; background: #f3f2ec; }
-    .photo-caption { margin: 7px 2px 0; color: var(--muted); font-size: 12px; }
-    .swipe-hint { margin-top: auto; padding-top: 24px; color: #77776f; font-size: 13px; }
+    .swipe-hint { margin-top: auto; padding-top: 24px; color: var(--muted); font-size: 13px; }
     .actions { display: flex; justify-content: center; align-items: center; gap: 14px; margin: 19px 0 13px; }
-    .action { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 142px; height: 58px; padding: 0 18px; border: 0; border-radius: 999px; box-shadow: 0 8px 22px #38372b1a; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; font: inherit; font-weight: 800; }
-    .action:hover { transform: translateY(-2px); box-shadow: 0 11px 28px #38372b27; }
+    .action { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 142px; height: 58px; padding: 0 18px; border: 0; border-radius: 999px; box-shadow: 0 8px 22px #0000001a; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; font: inherit; font-weight: 800; }
+    .action:hover { transform: translateY(-2px); box-shadow: 0 11px 28px #00000027; }
     .action:active { transform: scale(.97); }
     .action.no { color: #fff; background: var(--gray); }
-    .action.yes { color: var(--ink); background: var(--yellow); }
+    .action.yes { color: #fff; background: var(--ink); }
     .action svg { width: 21px; height: 21px; flex: 0 0 auto; }
-    .hint { text-align: center; color: #8b8b82; font-size: 12px; }
+    .hint { text-align: center; color: #777; font-size: 12px; }
     .empty { display: grid; place-content: center; height: 100%; text-align: center; }
     .empty .emoji { font-size: 48px; }
     .empty h2 { margin: 12px 0 5px; }
-    .empty p { margin: 0; color: var(--muted); }
-    .toast { position: fixed; z-index: 5; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translate(-50%, 14px); opacity: 0; width: min(92vw, 480px); padding: 12px 18px; border-radius: 16px; color: var(--ink); background: var(--yellow); box-shadow: 0 8px 24px #19192b30; font-size: 14px; font-weight: 700; pointer-events: none; transition: .22s; text-align: center; }
+    .empty { display: grid; place-content: center; justify-items: center; gap: 12px; height: 100%; text-align: center; }
+    .empty h2 { margin: 0; font-size: clamp(38px, 10vw, 52px); line-height: 1.05; letter-spacing: -.05em; }
+    .empty p { max-width: 310px; margin: 0; color: var(--muted); font-size: 15px; }
+    .apply-link { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; margin-top: 6px; padding: 0 26px; border-radius: 999px; color: #fff; background: var(--ink); font-weight: 800; text-decoration: none; }
+    .toast { position: fixed; z-index: 5; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translate(-50%, 14px); opacity: 0; width: min(92vw, 480px); padding: 12px 18px; border-radius: 16px; color: #fff; background: #333; box-shadow: 0 8px 24px #00000030; font-size: 14px; font-weight: 700; pointer-events: none; transition: .22s; text-align: center; }
     .toast.show { transform: translate(-50%, 0); opacity: 1; }
-    @media (max-height: 760px) { body { padding-top: calc(12px + max(70px, var(--tg-content-safe-area-inset-top, 0px))); } .heading { font-size: 26px; } .deck { height: 54vh; min-height: 340px; } .card { padding: 20px; } .card-index { margin-bottom: 18px; } .card-photo { height: 155px; } }
+    @media (max-height: 760px) { body { padding-top: calc(12px + max(70px, var(--tg-content-safe-area-inset-top, 0px))); } .heading { font-size: 26px; } .deck { height: 54vh; min-height: 340px; } .card { padding: 20px; } .card-index { margin-bottom: 18px; } }
   </style>
 </head>
 <body>
@@ -96,31 +97,36 @@
     // Apps Script URL используется Vercel API proxy, чтобы получать реальный ответ о записи.
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRe5CmVRT-AsHEB-d2IFlAOz8arWwBxQCrg8JQGlE79Af0_81D8OdqdAXYTSXX6tOD/exec';
     const questions = [
-      { text: 'Остаться в офисе после рабочего дня?' },
-      { text: 'Работать рядом с домом?' },
-      { text: 'Начинать смену в семь утра?' },
-      { text: 'Получать зарплату два раза в месяц?' },
-      { text: 'Выйти на смену в субботу?' },
-      { text: 'Пройти собеседование по видеосвязи?' },
-      { text: 'Носить форму на работе?' },
-      { text: 'Учиться новому прямо на работе?' },
-      { text: 'Общаться с людьми весь день?' },
-      { text: 'Выбрать гибкий график?' },
-      { text: 'Работать в команде друзей?' },
-      { text: 'Получить первую работу без опыта?' },
-      { text: 'Отвечать в рабочих чатах вечером?' },
-      { text: 'Поработать на городском событии?' },
-      { text: 'Работать на свежем воздухе?' },
-      { text: 'Совмещать учёбу и работу?' },
-      { text: 'Снимать короткие видео для бренда?' },
-      { text: 'Пройти оплачиваемую стажировку?' },
-      { text: 'Попробовать себя в профессии водителя?' },
-      {
-        text: 'Это новая реклама профессий Московского транспорта?',
-        photo: 'transport-banner.svg',
-        photoAlt: 'Макет рекламного баннера о работе в Московском транспорте',
-        caption: 'Пример рекламного баннера'
-      }
+      { id: 'V2-01', text: 'Получать 600 рублей каждый день на завтраки и обеды' },
+      { id: 'V2-02', text: 'Быстро расти по карьере, даже если это временно мешает личной жизни' },
+      { id: 'V2-03', text: 'Присоединиться к корпоративным творческим комьюнити: петь в хоре, служить в театре' },
+      { id: 'V2-04', text: 'Работать по ночам' },
+      { id: 'V2-05', text: 'Понимать задачи и условия для повышения — то есть строить прозрачный карьерный трек' },
+      { id: 'V2-06', text: 'Бесплатно ездить на общественном транспорте' },
+      { id: 'V2-07', text: 'Участвовать в профессиональных конкурсах среди коллег из компании и со всей страны' },
+      { id: 'V2-08', text: 'Работать по фиксированному графику без переработок' },
+      { id: 'V2-09', text: 'Получать юридическую и финансовую помощь, путевки и подарки от профсоюза' },
+      { id: 'V2-10', text: 'Сменить специальность внутри компании без карьерных потерь' },
+      { id: 'V2-11', text: 'Работать у дома' },
+      { id: 'V2-12', text: 'Возможность стать амбассадором компании: представлять бренд работодателя на событиях и в соцсетях' },
+      { id: 'V2-13', text: 'Работать сменами 1/1, 2/2 или 3/3 по 12–24 часа' },
+      { id: 'V2-14', text: 'Устроиться на работу, где не нужно образование и опыт' },
+      { id: 'V2-15', text: 'Заниматься спортом и участвовать в соревнованиях за счет работодателя' },
+      { id: 'V2-16', text: 'Собираться на планерках и писать начальнику напрямую по рабочим и нерабочим вопросам' },
+      { id: 'V2-17', text: 'Работать в стабильной компании много лет, иногда выполняя скучные задачи' },
+      { id: 'V2-18', text: 'Отдыхать в официальном отпуске до 48 дней в год' },
+      { id: 'V2-19', text: 'Работать в тоннеле метро' },
+      { id: 'V2-20', text: 'Принимать решение об устройстве в компанию по отзывам в интернете' },
+      { id: 'V2-21', text: 'Работать на физически тяжелой грязной должности с высокой зарплатой и быстрым карьерным ростом' },
+      { id: 'V2-22', text: 'Присоединиться к корпоративному комьюнити молодых сотрудников до 35 лет' },
+      { id: 'V2-23', text: 'Стабильно зарабатывать каждый год на 1–5% больше за счет индексации' },
+      { id: 'V2-24', text: 'Подчиняться руководителю, который поднялся с рабочей специальности' },
+      { id: 'V2-25', text: 'Получить рабочую специальность за счет компании' },
+      { id: 'V2-26', text: 'Совмещать работу и учебу/хобби/бизнес' },
+      { id: 'V2-27', text: 'Понимать ценность своей работы и чувствовать командность' },
+      { id: 'V2-28', text: 'Работать по трудовому договору' },
+      { id: 'V2-29', text: 'Получать бонусы типа мерча, билетов, путевок за участие во внерабочих корпоративных событиях' },
+      { id: 'V2-30', text: 'Выйти на пенсию после 20–25 лет стажа' }
     ];
     const deck = document.querySelector('#deck');
     const counter = document.querySelector('#counter');
@@ -175,7 +181,7 @@
     function render() {
       counter.textContent = current < questions.length ? `${current + 1} из ${questions.length}` : '';
       if (current >= questions.length) {
-        deck.innerHTML = '<div class="empty"><div class="emoji">✨</div><h2>Карточки закончились</h2><p>Спасибо, что поделился мнением!</p></div>';
+        deck.innerHTML = '<div class="empty"><h2>У нас мэтч 🫦</h2><p>Не мечтай, устраивайся в команду транспорта</p><a class="apply-link" href="https://rabota.transport.mos.ru/" target="_blank" rel="noopener noreferrer">Устроиться</a></div>';
         document.querySelector('#actions').hidden = true;
         document.querySelector('#hint').hidden = true;
         return;
@@ -192,13 +198,9 @@
       const item = questions[current];
       const card = document.createElement('article');
       card.className = 'card';
-      const photoMarkup = item.photo
-        ? `<img class="card-photo" src="${item.photo}" alt="${item.photoAlt || ''}"><div class="photo-caption">${item.caption || ''}</div>`
-        : '';
-      const compact = item.photo ? ' compact' : '';
       card.innerHTML = `<span class="swipe-label label-yes">НОРМ</span><span class="swipe-label label-no">СТРЁМ</span>
         <div class="card-content"><div class="card-index">ВОПРОС ${current + 1}</div>
-          <h2 class="question${compact}">${item.text}</h2>${photoMarkup}
+          <h2 class="question">${item.text}</h2>
           <div class="swipe-hint">Как тебе такой вариант?</div></div>`;
       deck.append(card);
       enableSwipe(card);
@@ -211,7 +213,7 @@
       if (!card) return;
       const payload = {
         event: 'swipe',
-        questionId: `Q${String(questionIndex + 1).padStart(2, '0')}`,
+        questionId: questions[questionIndex].id,
         answer: normal ? 'норм' : 'стрём'
       };
       if (!endpointConfigured()) {
@@ -223,6 +225,7 @@
       }
       isSaving = true;
       document.querySelectorAll('.action').forEach(button => { button.disabled = true; });
+      card.classList.add(normal ? 'gone-right' : 'gone-left');
       showToast('Сохраняю ответ…');
       const result = await sendEvent(payload);
       isSaving = false;
@@ -234,11 +237,9 @@
         showToast(`Не сохранилось: ${result.error}`);
         return;
       }
-      card.style.transform = '';
-      card.classList.add(normal ? 'gone-right' : 'gone-left');
       showToast(normal ? 'Норм 👍 · ответ сохранён' : 'Стрём 👎 · ответ сохранён');
       current++;
-      window.setTimeout(render, 180);
+      render();
     }
 
     function showToast(message) {
